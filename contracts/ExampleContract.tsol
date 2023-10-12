@@ -1,0 +1,70 @@
+pragma ever-solidity >=0.66;
+
+// Define a custom struct `ComplexType` with two properties.
+struct ComplexType {
+	uint32 first;
+	string second;
+}
+
+contract ExampleContract {
+	uint32 static nonce;
+
+	uint128 public simpleState;
+	ComplexType complexState;
+
+	// A modifier that refunds the sender after the function call.
+	modifier cashBack() {
+		tvm.rawReserve(address(this).balance - msg.value, 2);
+		_;
+		msg.sender.transfer({ value: 0, flag: 129 });
+	}
+
+	// Event emitted when the complexState is changed.
+	event StateChanged(ComplexType complexState);
+
+	// Constructor to initialize the contract state.
+	constructor(uint128 someParam, string second) public {
+		tvm.accept();
+		simpleState = someParam;
+		complexState = ComplexType(uint32(someParam % 1000), second);
+	}
+
+	// Function to get the current complexState.
+	function getComplexState() external view returns (ComplexType) {
+		return complexState;
+	}
+
+	// Function to set a new value for simpleState and complexState.first, refunds the sender after the call.
+	function setVariable(uint128 someParam) public cashBack returns (uint32) {
+		return _setVariable(someParam);
+	}
+
+	// Function to set a new value for `simpleState` and `complexState.first`.
+	function setVariableExternal(uint128 someParam) public {
+		tvm.accept();
+		_setVariable(someParam);
+	}
+
+	// Internal function to update `simpleState` and `complexState.first`, and emit the `StateChanged` event.
+	function _setVariable(uint128 someParam) internal returns (uint32) {
+		simpleState = someParam;
+		complexState.first = uint32(someParam % 1000);
+		emit StateChanged(complexState);
+		return complexState.first;
+	}
+
+	// Function to concatenate a given prefix with the `complexState.second` value.
+	function getSecondElementWithPrefix(string prefix) external view returns (string) {
+		return prefix + complexState.second;
+	}
+
+	// Function to compute and return an updated `ComplexType` value based on the given offset.
+	function computeSmth(
+		uint32 offset
+	) external view responsible returns (ComplexType res) {
+		require(offset < 1000, 1337);
+		res.first = complexState.first + offset;
+		res.second = complexState.second;
+		return {value: 0, flag: 68, bounce: false} complexState;
+	}
+}
